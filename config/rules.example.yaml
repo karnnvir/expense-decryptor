@@ -1,0 +1,97 @@
+# Copy to config/rules.yaml (git-ignored) and make it yours: payee names are personal, so they stay out of the repo.
+#
+# Categorization rules, checked top to bottom; the first match wins.
+#   match:     regex on the raw statement description (case-insensitive)
+#   merchant:  clean name; {0}, {1}… insert the regex's capture groups.
+#              No * or ?: the workbook's SUMIFS formulas read them as wildcards.
+#   category:  one of the categories below, or "same as previous" to inherit the category of the
+#              row just above it on the statement (used for GST lines that follow the charge they tax)
+#   kind:      spend (default) | transfer | investment | income | ignored (left out of every total)
+#              A credit that matches a spend rule is treated as a refund and nets against the category.
+#   direction: only match debits or credits
+#   account:   only match transactions on accounts whose name contains this, e.g. 'HDFC SB'
+#   max_amount: only match amounts below this (₹)
+#   review:    true = shown on the Review tab until you confirm it
+#   note:      shown next to the transaction
+
+categories:
+  - Food delivery
+  - Groceries
+  - Dining
+  - Rent
+  - Utilities
+  - Home services
+  - House help
+  - School fees
+  - Fitness
+  - Entertainment
+  - Donations
+  - Commute
+  - Shopping
+  - Subscriptions
+  - Health
+  - Insurance
+  - Travel
+  - EMI
+  - Card fees
+  - Family
+  - Cash
+  - Small UPI payments
+  - Unsorted transfers
+  - Uncategorized
+
+# Dashboard groups: the dashboard opens on these instead of the full category list.
+# Every category above belongs to one group; one left out shows under "Other".
+groups:
+  Home: [Rent, Utilities, Home services, House help]
+  Food: [Groceries, Food delivery, Dining]
+  Kids and family: [School fees, Family]
+  Health and insurance: [Health, Fitness, Insurance]
+  Lifestyle: [Shopping, Travel, Entertainment, Subscriptions, Commute, Donations]
+  Loans and fees: [EMI, Card fees]
+  Unsorted: [Small UPI payments, Unsorted transfers, Uncategorized, Cash]
+
+rules:
+  # --- Your own payees go first. Examples:
+  # - {match: 'YOUR LANDLORD', direction: debit, merchant: 'House rent', category: Rent}
+  # - {match: 'YOUR OWN NAME', merchant: 'Self transfer', category: Transfers, kind: transfer}
+  # - {account: 'XYZ SB', match: '.', merchant: 'Account not tracked', category: Transfers, kind: ignored}
+
+  # --- Money moving between your own accounts and cards: never counted as spend
+  - {match: 'CC BillPay-(\d{4})', merchant: 'Card bill payment XX{0}', category: Transfers, kind: transfer}
+  - {match: 'PAYMENT RECEIVED|^\[Payment\]', merchant: 'Card payment received', category: Transfers, kind: transfer}
+  - {match: 'CC PAYMENT|CREDIT CARD PAYMENT|Netbanking Funds Transfer', direction: credit, merchant: 'Card payment received', category: Transfers, kind: transfer}
+  - {match: 'Refund Amt Transfer to Bank Acc', merchant: 'Card refund moved to bank', category: Transfers, kind: transfer}
+
+  # --- Income
+  - {match: 'Int\.Pd|^INTEREST CREDIT', merchant: 'Savings interest', category: Income, kind: income}
+  - {match: '^CASHBACK (CREDIT|DEBIT)', merchant: 'Card cashback', category: Income, kind: income}
+  - {match: 'Dividend|\bDIV\b|-DIV-|Interim', direction: credit, merchant: 'Dividend', category: Income, kind: income}
+
+  # --- EMIs and card charges
+  - {match: 'Amortization - <\d+/\d+>(.+)$', merchant: 'EMI: {0}', category: EMI}
+  - {match: 'Annual Fee|RENEWAL MEMBERSHIP FEE', merchant: 'Card annual fee', category: Card fees}
+  - {match: 'DCC Fee', merchant: 'Foreign currency (DCC) fee', category: Card fees}
+  - {match: 'IGST-CI|IGST-VPS', merchant: 'GST', category: same as previous}
+
+  # --- Cash
+  - {match: '(^|/)(NFS|VAT|MAT)/|ATM WDL|CASH WDL', merchant: 'ATM withdrawal', category: Cash}
+
+  # --- Food
+  - {match: 'ZOMATO', merchant: 'Zomato', category: Food delivery}
+  - {match: 'INSTAMART', merchant: 'Swiggy Instamart', category: Groceries}  # above Swiggy: "SWIGGY INSTAMART" is groceries
+  - {match: 'SWIGGY|BUNDL TECH', merchant: 'Swiggy', category: Food delivery}  # Bundl Technologies is Swiggy's company name
+  - {match: 'INNOVATIVE ?RETAIL ?CONCE|BIGBASKET', merchant: 'BigBasket', category: Groceries}
+  - {match: 'RELIANCE ?RETAIL', merchant: 'Reliance Retail', category: Groceries}
+
+  # --- Bills and subscriptions
+  - {match: 'PAYAIRTEL|BHARTI AIRTEL|WWW AIRTEL', merchant: 'Airtel', category: Utilities}
+  - {match: 'NETFLIX', merchant: 'Netflix', category: Subscriptions}
+
+  # --- Health, travel, shopping
+  - {match: 'TATA 1MG', merchant: 'Tata 1mg', category: Health}
+  - {match: 'AIR INDIA', merchant: 'Air India', category: Travel}
+  - {match: 'BOOKMYSHOW', merchant: 'BookMyShow', category: Entertainment}
+
+  # --- Catch-all, last: any other UPI payment under ₹500 (no merchant given = use the name on the statement)
+  - {match: '(^|\s)UPI[/-]', direction: debit, max_amount: 500, category: Small UPI payments}

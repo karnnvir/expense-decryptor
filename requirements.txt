@@ -1,0 +1,7 @@
+pdfplumber
+openpyxl
+pyyaml
+# optional, to check workbook formulas without Excel
+pycel
+google-api-python-client
+google-auth-oauthlib
