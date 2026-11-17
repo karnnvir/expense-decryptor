@@ -1,0 +1,11 @@
+statements/
+.venv/
+__pycache__/
+out/
+config/passwords.yaml
+config/gmail_credentials.json
+config/gmail_token.json
+config/gmail_fetched.json
+config/rules.yaml
+config/gmail_sources.yaml
+.DS_Store

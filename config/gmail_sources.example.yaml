@@ -1,0 +1,19 @@
+# Copy to config/gmail_sources.yaml (git-ignored) and keep only the banks you use.
+#
+# Where each bank's statement emails come from, and which statements/ folder their PDFs go to.
+#   from:     sender address
+#   folder:   statements/<folder>
+#   query:    extra Gmail search terms (optional), e.g. to skip account statements from a card sender
+#   filename: regex an attachment's name must match to be saved (optional), e.g. when a sender
+#             also mails statements for another customer
+sources:
+  # Credit cards
+  - {from: credit_cards@icici.bank.in, folder: icici-credit-card}
+  - {from: Emailstatements.cards@hdfcbank.bank.in, folder: hdfc-credit-card}
+  - {from: cardstatement@kotak.bank.in, folder: kotak-credit-card}
+  - {from: estatement@yes.bank.in, folder: yes-credit-card, query: 'subject:"Credit Card"'}
+  - {from: cc.statements@axis.bank.in, folder: axis-credit-card}
+  # Bank accounts
+  - {from: hdfcbanksmartstatement@hdfcbank.bank.in, folder: hdfc-bank}
+  - {from: cbssbi.cas@alerts.sbi.bank.in, folder: sbi-bank}
+  - {from: customernotification@icici.bank.in, folder: icici-bank, filename: '^Statement_'}
